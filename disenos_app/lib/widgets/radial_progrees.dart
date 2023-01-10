@@ -1,0 +1,146 @@
+ import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+class RadialProgress extends StatefulWidget {
+
+  final double porcentaje;
+  final Color colorPrimario;
+  final Color colorSecundario;
+  final double grosorPrimario;
+  final double grosorSecundario;
+  final List<Color> arrayColors;
+
+  const RadialProgress({
+    super.key,
+    required this.porcentaje,
+    required this.colorPrimario,
+    required this.colorSecundario,
+    required this.grosorSecundario,
+    required this.grosorPrimario,
+    required this.arrayColors
+  });
+
+  @override
+  State<RadialProgress> createState() => _RadialProgressState();
+
+}
+
+class _RadialProgressState extends State<RadialProgress> with SingleTickerProviderStateMixin {
+
+  late AnimationController controller;
+  late double porcentajeAnterior;
+
+  @override
+  void initState() {
+
+    porcentajeAnterior = widget.porcentaje;
+
+    controller = AnimationController(vsync: this, duration: const Duration( milliseconds: 200 ));
+    
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    controller.forward(from: 0.0);
+
+    final diferenciaAnimar = widget.porcentaje - porcentajeAnterior;
+    porcentajeAnterior = widget.porcentaje;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: ( context, child ) {
+        return Container(
+          padding: const EdgeInsets.all(10),
+          width: double.infinity,
+          height: double.infinity,
+          child: CustomPaint(
+            painter: _MiRadialProgress( 
+              ( widget.porcentaje - diferenciaAnimar ) + 
+              ( diferenciaAnimar * controller.value ),
+              widget.colorPrimario ,
+              widget.colorSecundario,
+              widget.grosorPrimario,
+              widget.grosorSecundario,
+              widget.arrayColors
+            ),
+          ),
+        );
+      }
+    );
+  }
+}
+
+class _MiRadialProgress extends CustomPainter {
+
+  final double porcentaje;
+  final Color colorPrimario;
+  final Color colorSecundario;
+  final double grosorPrimario;
+  final double grosorSecundario;
+  final List<Color> arrayColors;
+
+  _MiRadialProgress(
+    this.porcentaje, 
+    this.colorPrimario, 
+    this.colorSecundario,
+    this.grosorPrimario,
+    this.grosorSecundario,
+    this.arrayColors
+  );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+
+    Gradient gradiente = LinearGradient(
+      colors: arrayColors
+    );
+
+    final Rect rect = Rect.fromCircle(
+      center: const Offset(0, 0),
+      radius: 180
+    );
+
+    final paint = Paint()
+      ..strokeWidth = grosorPrimario
+      ..color = colorPrimario
+      ..style = PaintingStyle.stroke;
+
+    Offset center = Offset( size.width * 0.5, size.width / 2 );
+    double radio = min(size.width * 0.5, size.width * 0.5);
+    
+    canvas.drawCircle(center, radio, paint);
+
+    final paintArco = Paint()
+      ..strokeWidth = grosorSecundario
+      //..color = colorSecundario
+      ..shader = gradiente.createShader(rect)
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    
+    double arcAngle = 2 * pi * ( porcentaje / 100 );
+    
+    canvas.drawArc( 
+      Rect.fromCircle(center: center, radius: radio),
+      -pi/2,
+      arcAngle,
+      false, 
+      paintArco
+    );
+
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+
+}

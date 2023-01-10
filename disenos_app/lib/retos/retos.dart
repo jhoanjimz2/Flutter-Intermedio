@@ -1,0 +1,1 @@
+export 'package:disenos_app/retos/cuadrado_animado_screen.dart';
